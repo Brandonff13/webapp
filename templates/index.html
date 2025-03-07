@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nobel Winners</title>
+  <!-- jQuery para las peticiones AJAX -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Se usa Chart.js para la gráfica de barras -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Ganadores del Premio Nobel por País</h1>
+  <!-- Lienzo para la gráfica de barras -->
+  <canvas id="barChart" width="800" height="400"></canvas>
+
+  <h2>5 Premios Nobel Seleccionados Aleatoriamente</h2>
+  <div id="winnersList">Cargando información...</div>
+
+  <script>
+    // Datos para la gráfica de barras (inyectados desde Flask)
+    var countries = {{ countries|tojson }};
+    var counts = {{ counts|tojson }};
+
+    // Crear la gráfica de barras usando Chart.js
+    var ctx = document.getElementById('barChart').getContext('2d');
+    var barChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: countries,
+        datasets: [{
+          label: 'Número de Ganadores',
+          data: counts,
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+
+    // Realizar una petición AJAX a la API para obtener 5 premios Nobel
+    $.ajax({
+      url: '/api/winners',
+      method: 'GET',
+      success: function(data) {
+        var html = '<ul>';
+        data.forEach(function(winner) {
+          html += '<li><a href="' + winner.link + '" target="_blank">' + winner.name + '</a> (' + winner.year + ') - ' + winner.category + '</li>';
+        });
+        html += '</ul>';
+        $('#winnersList').html(html);
+      },
+      error: function() {
+        $('#winnersList').html('Error al cargar la información.');
+      }
+    });
+
+    /* 
+    Punto extra (opcional): Si deseas agregar una petición AJAX para obtener
+    datos agregados (por ejemplo, número de categorías por país) y generar otra gráfica,
+    puedes crear otro endpoint en Flask (por ejemplo, '/api/categories') y realizar
+    el proceso similar, renderizando la gráfica con la librería que prefieras (mpld3, Chart.js, etc.).
+    */
+  </script>
+</body>
+</html>
